@@ -1,52 +1,90 @@
 import streamlit as st
 import pickle
-import pandas as pd
 
 # -----------------------------
-# Load data
+# Load Model Files
 # -----------------------------
-books = pickle.load(open('model/books.pkl', 'rb'))
+pt = pickle.load(open('model/books.pkl', 'rb'))
 similarity = pickle.load(open('model/similarity.pkl', 'rb'))
 
 # -----------------------------
-# Recommendation function
+# Recommendation Function
 # -----------------------------
 def recommend(book_name):
-    try:
-        index = books[books['Book-Title'] == book_name].index[0]
-        distances = similarity[index]
-        books_list = sorted(list(enumerate(distances)), reverse=True, key=lambda x: x[1])[1:6]
-
-        recommended_books = []
-
-        for i in books_list:
-            recommended_books.append(books.iloc[i[0]]['Book-Title'])
-
-        return recommended_books
-
-    except:
+    matches = [book for book in pt.index if book_name.lower() in book.lower()]
+    
+    if len(matches) == 0:
         return []
+    
+    book_name = matches[0]
+    index = list(pt.index).index(book_name)
+
+    distances = sorted(
+        list(enumerate(similarity[index])),
+        key=lambda x: x[1],
+        reverse=True
+    )[1:6]
+
+    return [pt.index[i[0]] for i in distances]
+
 
 # -----------------------------
-# UI Design
+# Streamlit UI
 # -----------------------------
-st.set_page_config(page_title="Book Recommender", layout="wide")
+st.set_page_config(page_title="Book Recommendation System", page_icon="📚")
 
+# Title
 st.title("📚 Book Recommendation System")
-st.markdown("Get similar books instantly!")
 
-# Dropdown for book selection
-book_list = books['Book-Title'].values
-selected_book = st.selectbox("Select a book", book_list)
+# Business Objective (from README)
+st.markdown("""
+### 🎯 Business Objective  
+Recommend books to users based on their preferences using **collaborative filtering**.
 
-# Button
+This system analyzes user-book interactions and suggests similar books using **cosine similarity**.
+""")
+
+# Dataset Info (short version from README)
+with st.expander("📂 Dataset Information"):
+    st.write("""
+    - **Users**: User ID, Location, Age  
+    - **Books**: Title, Author, Publisher, Year  
+    - **Ratings**: Ratings from 1–10 (0 = implicit)  
+    """)
+
+# -----------------------------
+# User Input
+# -----------------------------
+st.markdown("### 🔍 Enter a Book Name")
+book_name = st.text_input("Type here...")
+
+# -----------------------------
+# Recommendation Button
+# -----------------------------
 if st.button("Recommend"):
 
-    recommendations = recommend(selected_book)
-
-    if recommendations:
-        st.subheader("📖 Recommended Books:")
-        for book in recommendations:
-            st.write("👉", book)
+    if book_name.strip() == "":
+        st.warning("⚠️ Please enter a book name")
+    
     else:
-        st.error("Book not found or model not ready.")
+        recommendations = recommend(book_name)
+
+        if len(recommendations) == 0:
+            st.error("❌ Book not found in dataset")
+        
+        else:
+            st.success("✅ Top Recommended Books:")
+
+            for i, book in enumerate(recommendations, 1):
+                st.write(f"**{i}. {book}**")
+
+
+# -----------------------------
+# Footer
+# -----------------------------
+st.markdown("---")
+st.markdown("""
+💡 **Model Used:** Item-Based Collaborative Filtering  
+⚙️ **Technique:** Cosine Similarity  
+📊 Built using Pandas, NumPy, Scikit-learn, Streamlit
+""")
