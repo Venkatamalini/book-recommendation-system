@@ -23,6 +23,19 @@ Contains the book rating information. Ratings (Book-Rating) are either explicit,
 
 
 
+## 📸 Screenshots
+
+### 🔍 Home Page
+![Home](screenshots/home.png)
+
+### 📚 Recommendations Output
+![Output](screenshots/output.png)
+
+
+
+
+
+
 ## 🚀 Live App
 
 👉 [Click here to try the Book Recommendation System](https://book-recommendation-system1.streamlit.app/)
